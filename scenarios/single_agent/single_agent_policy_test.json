@@ -1,0 +1,31 @@
+{
+  "description": "Single-agent learning with multiple policies, for detailed behavior analysis",
+  "run_single_agent_test": {
+    "scenario": "single_agent_policy_test",
+    "id": "single_agent_policy_test_01",
+    "year": 2019,
+    "days": 30,
+    "start": "-03-01 00:00",
+    "dt": 1,
+    "scale": 1,
+    "max_price": 100,
+    "importCBT": false,
+    "import_storages": true,
+    "opt_storages": false,
+    "write_to_db": false,
+    "rl_mode": true,
+    "rl_explainable": true,
+    "learning_params": {
+      "training": true,
+      "learning_rate": 1e-4,
+      "batch_size": 8,
+      "train_freq": 1,
+      "gradient_steps": 50,
+      "gamma": 0.99,
+      "training_episodes": 15,
+      "learning_starts": 20,
+      "noise_sigma": 0.1
+    },
+    "load_params": {}
+  }
+}

@@ -10,7 +10,8 @@ from torch.optim import Adam
 import os
 import numpy as np
 
-from policies import Actor
+# from policies import Actor
+from policies import SACActor as Actor
 from misc import NormalActionNoise, initializer
 
 

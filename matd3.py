@@ -13,6 +13,7 @@ import pickle
 import os
 
 from policies import CriticTD3 as Critic
+# from policies import SACCritic as Critic
 from buffer import ReplayBuffer
 from misc import polyak_update
 

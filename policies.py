@@ -98,12 +98,15 @@ class Actor(nn.Module):
         
         return x
     
-    
+
 class SACCritic(nn.Module):
     """ Critic model for the SAC algorithm. """
-    def __init__(self, obs_dim, act_dim, float_type):
+    # Addedd additional parameters to macth td3 parameters
+    def __init__(self, n_agents, obs_dim, act_dim, float_type, unique_obs_len):
         super(SACCritic, self).__init__()
-        self.FC1 = nn.Linear(obs_dim + act_dim, 256, dtype=float_type)
+        # Adjust the input dimension according to n_agents and unique_obs_len
+        adjusted_obs_dim = obs_dim + unique_obs_len * (n_agents - 1)
+        self.FC1 = nn.Linear(adjusted_obs_dim + act_dim, 256, dtype=float_type)
         self.FC2 = nn.Linear(256, 256, dtype=float_type)
         self.FC3 = nn.Linear(256, 1, dtype=float_type)
 
@@ -112,6 +115,7 @@ class SACCritic(nn.Module):
         x = F.relu(self.FC1(x))
         x = F.relu(self.FC2(x))
         return self.FC3(x)
+
 
 class SACActor(nn.Module):
     """ Actor model for the SAC algorithm. """

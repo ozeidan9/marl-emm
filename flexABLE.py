@@ -27,6 +27,7 @@ import CRM
 from resultsWriter import ResultsWriter
 from misc import MeritOrder, initializer
 from matd3 import TD3
+from mappo import PPO 
 
 import pandas as pd
 import numpy as np
@@ -201,31 +202,70 @@ class World():
         if marketType == "CRM":
             self.markets["CRM"] = CRM.CRM(name, demand=demand, world=self)
 
-
     def create_learning_algorithm(self):
-        buffer_size = int(5e5)
-        self.rl_algorithm = TD3(env=self,
-                                buffer_size=buffer_size,
-                                learning_starts=self.learning_params['learning_starts'],
-                                train_freq=self.learning_params['train_freq'],
-                                gradient_steps=self.learning_params['gradient_steps'],
-                                batch_size=self.learning_params['batch_size'],
-                                gamma=self.learning_params['gamma'])
+        if self.learning_params.get('algorithm') == 'PPO':
+            # Initialize PPO parameters
+            self.rl_algorithm = PPO(
+                env=self,
+                actor_lr=self.learning_params['actor_lr'],
+                critic_lr=self.learning_params['critic_lr'],
+                gamma=self.learning_params['gamma'],
+                gae_lambda=self.learning_params['gae_lambda'],
+                ppo_epochs=self.learning_params['ppo_epochs'],
+                mini_batch_size=self.learning_params['mini_batch_size'],
+                ppo_clip=self.learning_params['ppo_clip']
+            )
+        else:
+            # TD3 initialization as before
+            buffer_size = int(5e5)
+            self.rl_algorithm = TD3(
+                env=self,
+                buffer_size=buffer_size,
+                learning_starts=self.learning_params['learning_starts'],
+                train_freq=self.learning_params['train_freq'],
+                gradient_steps=self.learning_params['gradient_steps'],
+                batch_size=self.learning_params['batch_size'],
+                gamma=self.learning_params['gamma']
+            )
 
+    # def create_learning_algorithm(self):
+    #     buffer_size = int(5e5)
+    #     self.rl_algorithm = TD3(env=self,
+    #                             buffer_size=buffer_size,
+    #                             learning_starts=self.learning_params['learning_starts'],
+    #                             train_freq=self.learning_params['train_freq'],
+    #                             gradient_steps=self.learning_params['gradient_steps'],
+    #                             batch_size=self.learning_params['batch_size'],
+    #                             gamma=self.learning_params['gamma'])
 
     def run_simulation(self):
         self.currstep = 0
         for agent in self.agents.values():
             agent.initialize()
 
-        for _ in tqdm(self.snapshots, leave=False, miniters=100, smoothing=0.1):
-        #for _ in self.snapshots:
+        while self.currstep < len(self.snapshots):
             self.step()
+            self.currstep += 1
 
         if self.rl_mode:
-            self.extract_rl_episode_info()
-        else:
-            self.extract_conv_episode_info()
+            if isinstance(self.rl_algorithm, PPO):
+                self.rl_algorithm.update_policy()  # For PPO
+            else:
+                self.extract_rl_episode_info()  # For TD3
+
+    # def run_simulation(self):
+    #     self.currstep = 0
+    #     for agent in self.agents.values():
+    #         agent.initialize()
+
+    #     for _ in tqdm(self.snapshots, leave=False, miniters=100, smoothing=0.1):
+    #     #for _ in self.snapshots:
+    #         self.step()
+
+    #     if self.rl_mode:
+    #         self.extract_rl_episode_info()
+    #     else:
+    #         self.extract_conv_episode_info()
 
 
     # perform a single step on each market in the following order CRM, DHM, EOM
@@ -249,9 +289,14 @@ class World():
                 agent.step()
 
             if self.training and self.rl_mode:
-                obs, actions, rewards = self.collect_experience()
-                self.rl_algorithm.buffer.add(obs, actions, rewards)
-                self.rl_algorithm.update_policy()
+                if isinstance(self.rl_algorithm, PPO):
+                    data = self.rl_algorithm.collect_trajectories()  # Collect data for PPO
+                    self.rl_algorithm.update_policy(data)  # Update policy with collected data
+                else:
+                    # TD3 specific code
+                    obs, actions, rewards = self.collect_experience()
+                    self.rl_algorithm.buffer.add(obs, actions, rewards)
+                    self.rl_algorithm.update_policy()
 
                 self.current_state = obs
                 

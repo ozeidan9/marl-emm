@@ -27,7 +27,7 @@ import CRM
 from resultsWriter import ResultsWriter
 from misc import MeritOrder, initializer
 from matd3 import TD3
-from mappo import PPO 
+# from ppo import PPO 
 
 import pandas as pd
 import numpy as np
@@ -203,30 +203,30 @@ class World():
             self.markets["CRM"] = CRM.CRM(name, demand=demand, world=self)
 
     def create_learning_algorithm(self):
-        if self.learning_params.get('algorithm') == 'PPO':
-            # Initialize PPO parameters
-            self.rl_algorithm = PPO(
-                env=self,
-                actor_lr=self.learning_params['actor_lr'],
-                critic_lr=self.learning_params['critic_lr'],
-                gamma=self.learning_params['gamma'],
-                gae_lambda=self.learning_params['gae_lambda'],
-                ppo_epochs=self.learning_params['ppo_epochs'],
-                mini_batch_size=self.learning_params['mini_batch_size'],
-                ppo_clip=self.learning_params['ppo_clip']
-            )
-        else:
+        # if self.learning_params.get('algorithm') == 'PPO':
+        #     # Initialize PPO parameters
+        #     self.rl_algorithm = PPO(
+        #         env=self,
+        #         actor_lr=self.learning_params['actor_lr'],
+        #         critic_lr=self.learning_params['critic_lr'],
+        #         gamma=self.learning_params['gamma'],
+        #         gae_lambda=self.learning_params['gae_lambda'],
+        #         ppo_epochs=self.learning_params['ppo_epochs'],
+        #         mini_batch_size=self.learning_params['mini_batch_size'],
+        #         ppo_clip=self.learning_params['ppo_clip']
+        #     )
+        # else:
             # TD3 initialization as before
-            buffer_size = int(5e5)
-            self.rl_algorithm = TD3(
-                env=self,
-                buffer_size=buffer_size,
-                learning_starts=self.learning_params['learning_starts'],
-                train_freq=self.learning_params['train_freq'],
-                gradient_steps=self.learning_params['gradient_steps'],
-                batch_size=self.learning_params['batch_size'],
-                gamma=self.learning_params['gamma']
-            )
+        buffer_size = int(5e5)
+        self.rl_algorithm = TD3(
+            env=self,
+            buffer_size=buffer_size,
+            learning_starts=self.learning_params['learning_starts'],
+            train_freq=self.learning_params['train_freq'],
+            gradient_steps=self.learning_params['gradient_steps'],
+            batch_size=self.learning_params['batch_size'],
+            gamma=self.learning_params['gamma']
+        )
 
     # def create_learning_algorithm(self):
     #     buffer_size = int(5e5)
@@ -248,10 +248,10 @@ class World():
             self.currstep += 1
 
         if self.rl_mode:
-            if isinstance(self.rl_algorithm, PPO):
-                self.rl_algorithm.update_policy()  # For PPO
-            else:
-                self.extract_rl_episode_info()  # For TD3
+            # if isinstance(self.rl_algorithm, PPO):
+            #     self.rl_algorithm.update_policy()  # For PPO
+            # else:
+            self.extract_rl_episode_info()  # For TD3
 
     # def run_simulation(self):
     #     self.currstep = 0
@@ -289,14 +289,14 @@ class World():
                 agent.step()
 
             if self.training and self.rl_mode:
-                if isinstance(self.rl_algorithm, PPO):
-                    data = self.rl_algorithm.collect_trajectories()  # Collect data for PPO
-                    self.rl_algorithm.update_policy(data)  # Update policy with collected data
-                else:
-                    # TD3 specific code
-                    obs, actions, rewards = self.collect_experience()
-                    self.rl_algorithm.buffer.add(obs, actions, rewards)
-                    self.rl_algorithm.update_policy()
+                # if isinstance(self.rl_algorithm, PPO):
+                #     data = self.rl_algorithm.collect_trajectories()  # Collect data for PPO
+                #     self.rl_algorithm.update_policy(data)  # Update policy with collected data
+                # else:
+                # TD3 specific code
+                obs, actions, rewards = self.collect_experience()
+                self.rl_algorithm.buffer.add(obs, actions, rewards)
+                self.rl_algorithm.update_policy()
 
                 self.current_state = obs
                 

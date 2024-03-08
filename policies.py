@@ -99,33 +99,33 @@ class Actor(nn.Module):
         return x
     
 
-class SACCritic(nn.Module):
-    """ Critic model for the SAC algorithm. """
-    # Addedd additional parameters to macth td3 parameters
-    def __init__(self, n_agents, obs_dim, act_dim, float_type, unique_obs_len):
-        super(SACCritic, self).__init__()
-        # Adjust the input dimension according to n_agents and unique_obs_len
-        adjusted_obs_dim = obs_dim + unique_obs_len * (n_agents - 1)
-        self.FC1 = nn.Linear(adjusted_obs_dim + act_dim, 256, dtype=float_type)
-        self.FC2 = nn.Linear(256, 256, dtype=float_type)
-        self.FC3 = nn.Linear(256, 1, dtype=float_type)
+# class SACCritic(nn.Module):
+#     """ Critic model for the SAC algorithm. """
+#     # Addedd additional parameters to macth td3 parameters
+#     def __init__(self, n_agents, obs_dim, act_dim, float_type, unique_obs_len):
+#         super(SACCritic, self).__init__()
+#         # Adjust the input dimension according to n_agents and unique_obs_len
+#         adjusted_obs_dim = obs_dim + unique_obs_len * (n_agents - 1)
+#         self.FC1 = nn.Linear(adjusted_obs_dim + act_dim, 256, dtype=float_type)
+#         self.FC2 = nn.Linear(256, 256, dtype=float_type)
+#         self.FC3 = nn.Linear(256, 1, dtype=float_type)
 
-    def forward(self, obs, act):
-        x = th.cat([obs, act], dim=1)
-        x = F.relu(self.FC1(x))
-        x = F.relu(self.FC2(x))
-        return self.FC3(x)
+#     def forward(self, obs, act):
+#         x = th.cat([obs, act], dim=1)
+#         x = F.relu(self.FC1(x))
+#         x = F.relu(self.FC2(x))
+#         return self.FC3(x)
 
 
-class SACActor(nn.Module):
-    """ Actor model for the SAC algorithm. """
-    def __init__(self, obs_dim, act_dim, float_type):
-        super(SACActor, self).__init__()
-        self.FC1 = nn.Linear(obs_dim, 256, dtype=float_type)
-        self.FC2 = nn.Linear(256, 256, dtype=float_type)
-        self.FC3 = nn.Linear(256, act_dim, dtype=float_type)
+# class SACActor(nn.Module):
+#     """ Actor model for the SAC algorithm. """
+#     def __init__(self, obs_dim, act_dim, float_type):
+#         super(SACActor, self).__init__()
+#         self.FC1 = nn.Linear(obs_dim, 256, dtype=float_type)
+#         self.FC2 = nn.Linear(256, 256, dtype=float_type)
+#         self.FC3 = nn.Linear(256, act_dim, dtype=float_type)
 
-    def forward(self, obs):
-        x = F.relu(self.FC1(obs))
-        x = F.relu(self.FC2(x))
-        return th.tanh(self.FC3(x))  # Ensure action bounds are respected
+#     def forward(self, obs):
+#         x = F.relu(self.FC1(obs))
+#         x = F.relu(self.FC2(x))
+#         return th.tanh(self.FC3(x))  # Ensure action bounds are respected

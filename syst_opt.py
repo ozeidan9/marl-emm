@@ -79,13 +79,18 @@ generators['emission'] = generators.apply(lambda x: assign_emissions(x), axis=1)
 marginal_cost_df = pd.DataFrame(index=index, columns=generators.index, data=0.)
 marginal_cost_df = generators.apply(lambda x: calculate_marginal_cost(x), axis=1).T
 marginal_cost_df.index = index
-
 #%%
 n = pypsa.Network()
 n.set_snapshots(index)
 
 # Adding one bus for Germany
 n.add("Bus", "DE")
+
+
+# Ensure that all DataFrames are indexed by the same time index
+marginal_cost_df.columns = marginal_cost_df.columns.astype(str)
+marginal_cost_df.index = index
+
 
 # Adding generators
 n.madd('Generator',
@@ -104,18 +109,40 @@ n.madd('Generator',
 # Adding loads
 n.add('Load', 'DE_demand', bus='DE', p_set=load['demand'])
 
-# Adding storage units
+# Before adding storage units, ensure the indices and data types are correct
+# Convert numerical data to the appropriate types
+storage_units['max_power_dis'] = pd.to_numeric(storage_units['max_power_dis'])
+storage_units['efficiency_ch'] = pd.to_numeric(storage_units['efficiency_ch'])
+storage_units['efficiency_dis'] = pd.to_numeric(storage_units['efficiency_dis'])
+storage_units['max_hours'] = pd.to_numeric(storage_units['max_hours'])
+storage_units['natural_inflow'] = pd.to_numeric(storage_units['natural_inflow'])
+storage_units['variable_cost_ch'] = pd.to_numeric(storage_units['variable_cost_ch'])
+
+# Add storage units to the network
 n.madd('StorageUnit',
        storage_units.index,
        bus='DE',
        carrier='technology',
        p_nom=storage_units['max_power_dis'],
-       efficiency_store= storage_units['efficiency_ch'],
-       efficiency_dispatch= storage_units['efficiency_dis'],
-       max_hours=storage_units['max_hours'], 
-       inflow=storage_units['natural_inflow'],
+       efficiency_store=storage_units['efficiency_ch'],
+       efficiency_dispatch=storage_units['efficiency_dis'],
+       max_hours=storage_units['max_hours'],
+       inflow=storage_units['natural_inflow'].fillna(0),  # Ensure no NaN values
        marginal_cost=storage_units['variable_cost_ch'],
        )
+
+# # Adding storage units
+# n.madd('StorageUnit',
+#        storage_units.index,
+#        bus='DE',
+#        carrier='technology',
+#        p_nom=storage_units['max_power_dis'],
+#        efficiency_store= storage_units['efficiency_ch'],
+#        efficiency_dispatch= storage_units['efficiency_dis'],
+#        max_hours=storage_units['max_hours'], 
+#        inflow=storage_units['natural_inflow'],
+#        marginal_cost=storage_units['variable_cost_ch'],
+#        )
 
 # Adding import export
 cross_border_exchange['Net_export'] = cross_border_exchange['Export'] - cross_border_exchange['Import']

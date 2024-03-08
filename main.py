@@ -3,6 +3,9 @@
 # import ipywidgets
 # print(ipywidgets.__version__)
 
+import matplotlib.pyplot as plt
+
+
 import json
 from datetime import datetime
 
@@ -11,6 +14,8 @@ from tqdm.notebook import tqdm
 from tqdm.notebook import tqdm_notebook
 
 from flexABLE import World
+import matplotlib.pyplot as plt
+
 
 tqdm_notebook.pandas()
 # %% 
@@ -62,7 +67,7 @@ world.load_scenario(startingPoint=starting_point,
 # %% 
 # Start simulation
 index = pd.date_range(world.starting_date, periods=len(world.snapshots), freq=f'{str(60 * world.dt)}T')
-
+        
 if world.rl_mode and world.training:
     training_start = datetime.now()
     world.logger.info("################")
@@ -124,6 +129,130 @@ else:
     world.logger.info(f'Average reward: {world.conv_eval_rewards[-1]}')
     world.logger.info(f'Average profit: {world.conv_eval_profits[-1]}')
     world.logger.info(f'Average regret: {world.conv_eval_regrets[-1]}')
+    
+# %%
 
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import os
+
+# Define the directory path where the CSV files are stored
+directory_path = 'output/storage_paper/case_02/STO_capacities/'
+
+# Create a list of storage unit identifiers
+storage_units = [f'st_{i:02}' for i in range(1, 26)]
+# Initialize a DataFrame to hold all profits data
+profits_df = pd.DataFrame({
+    'unit': storage_units,
+    'profits': [0] * len(storage_units)
+})
+count = 0
+# Iterate over each storage unit to aggregate profits data
+for unit in storage_units:
+    # Construct file path for profits data
+    profits_file_path = os.path.join(directory_path, f'{unit}_Profits.csv')
+    
+    # Check if the file exists
+    if os.path.exists(profits_file_path):
+        # Read the profits data from CSV file
+        unit_profits = pd.read_csv(profits_file_path, index_col=0, parse_dates=True)
+        # print column names and data types
+        print("unit profits: ", unit_profits['Profits'].sum())
+        sum = unit_profits['Profits'].sum()
+        # Sum the profits for the unit and add to the DataFrame
+        # append unit profits to profits_df
+        
+        
+        profits_df['profits'][count] = sum
+        count += 1
+
+        # reset index
+        # profits_df = profits_df.set_index('unit')
+        # print("profits_df: ", profits_df)
+
+
+
+# Assuming 'profits_df' has already been built up to this point as shown above
+plt.figure(figsize=(14, 7))
+plt.bar(profits_df['unit'], profits_df['profits'])
+plt.title('Total Profits by Storage Unit')
+plt.xlabel('Storage Units')
+plt.ylabel('Total Profits (EUR)')
+plt.xticks(rotation=90)  # Rotate x-axis labels to show them clearly
+plt.tight_layout()
+plt.savefig('output/storage_paper/case_02/plots/total_profits_by_unit.png')
+plt.close()
+
+print("Plot for total profits by storage unit generated.")
 
 # %%
+
+
+# Here is a python script similar to the one provided for profits. It will generate plots for total charge/discharge and state of charge for all storage units.
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import os
+
+# Define the directory path where the CSV files are stored
+directory_path = 'output/storage_paper/case_02/STO_capacities/'
+
+# Create a list of storage unit identifiers
+storage_units = [f'st_{i:02}' for i in range(1, 26)]
+# Initialize DataFrames to hold all capacity and SOC data
+capacity_df = pd.DataFrame({
+    'unit': storage_units,
+    'total_capacity': [0] * len(storage_units)
+})
+soc_df = pd.DataFrame({
+    'unit': storage_units,
+    'soc': [0] * len(storage_units)
+})
+
+
+count = 0
+# Iterate over each storage unit to aggregate capacity and SOC data
+for unit in storage_units:
+    # Construct file paths for capacity and SOC data
+    capacity_file_path = os.path.join(directory_path, f'{unit}_Capacity.csv')
+    soc_file_path = os.path.join(directory_path, f'{unit}_SOC.csv')
+    
+    # Check if the capacity file exists and read data
+    capacity_data = pd.read_csv(capacity_file_path, index_col=0, parse_dates=True)
+    total_capacity = capacity_data['Total st'].sum()
+    print("total_capacity: ", total_capacity)
+    capacity_df['total_capacity'][count] = total_capacity
+
+    # Check if the SOC file exists and read data
+    soc_data = pd.read_csv(soc_file_path, index_col=0, parse_dates=True)
+    average_soc = soc_data['SOC'].mean()  # Assuming we want the average SOC
+    print("average_soc: ", average_soc)
+    soc_df['soc'][count] = average_soc
+
+    count += 1
+    
+    
+# Plot Total Capacity
+plt.figure(figsize=(14, 7))
+plt.bar(capacity_df['unit'], capacity_df['total_capacity'], color='orange')
+plt.title('Total Charge and Discharge Capacity by Storage Unit')
+plt.xlabel('Storage Units')
+plt.ylabel('Total Capacity (MWh)')
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig('output/storage_paper/case_02/plots/total_capacity_by_unit.png')
+plt.close()
+
+# Plot State of Charge
+plt.figure(figsize=(14, 7))
+plt.bar(soc_df['unit'], soc_df['soc'], color='green')
+plt.title('Average State of Charge (SOC) by Storage Unit')
+plt.xlabel('Storage Units')
+plt.ylabel('Average SOC (MWh)')
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig('output/storage_paper/case_02/plots/average_soc_by_unit.png')
+plt.close()
+
+print("Plots for total capacity and average SOC by storage unit generated.")

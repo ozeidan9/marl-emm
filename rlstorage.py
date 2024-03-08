@@ -11,7 +11,7 @@ import os
 import numpy as np
 
 # from policies import Actor
-from policies import SACActor as Actor
+from policies import Actor
 from misc import NormalActionNoise, initializer
 
 
